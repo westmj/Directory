@@ -1,5 +1,7 @@
 package Directory;
-## prove -lr -j 4 t    and optionally: xt   ## (use the library, recurse directories, and multiple cores')
+## prove -lrv -j 4 t    and optionally: xt   ## (use the library, recurse directories, and multiple cores')
+##  perlcritic --severity 2  --verbose 9  lib/Directory.pm
+##  perltidy -l=100 -b  --indent-only lib/Directory.pm 
 use 5.008001;
 use strict;
 use warnings;
@@ -7,6 +9,8 @@ use diagnostics; ## verbose errors
 use warnings FATAL => qw( all );
 use Encode            qw( encode decode );
 use Data::Peek;   # Instead of Data::Dumper... call DDumper instead of Dumper ... use DPeek to look at encoding
+BEGIN { $ENV{SPREADSHEET_READ_XLSX} = "Spreadsheet::ParseXLSX";} ## avoid Spreadsheet::XLSX bad reader see Merijn emails
+use Spreadsheet::Read qw( ReadData);
 
 our $VERSION = "0.01";
 
@@ -14,23 +18,38 @@ use Carp;
 use Exporter;
 our @ISA       = qw( Exporter );
 our @EXPORT    = qw( roster  );
-our @EXPORT_OK = qw( parses rows cellrow row add );
+our @EXPORT_OK = qw(  );
 
-sub new {   ##  perl -I ./lib  script/new.pl 
-    my ($class) = shift @_;   print "Inside new with \$class = '$class'\n";
-    my $self = {};    print "Self is still only a reference to \$self  = '$self'\n";
-    bless $self, $class;  print "by blessing, \$self is now an bless (anonymous hash) associated with the class '$class': \$self = '$self'\n";
-    return $self;  ## return the object 
+sub new {   ##  perl -I ./lib  script/new.pl
+    my ($class) = shift @_;  ## print "Inside new with \$class = '$class'\n";
+    my $self = { test => 'tester' , };  ##  print "Self is still only a reference to \$self  = '$self'\n";
+    bless $self, $class; ## print "by blessing, \$self is now an bless (anonymous hash) associated with the class '$class': \$self = '$self'\n";
+    return $self;  ## return the object
 } ## new
 
-sub roster {
-    my $file = shift ;	## or return;  ## wants a filename (source)  ## return if needs 
+sub _roster_mfs_xlsx {
+  ## MFS Roster format as of 2021-06-June-01 
+    my $self = shift;
+    my $workbook = shift;
+    $self->{roster} = {\$workbook};
+}
 
-    my %opt;
-    if (@_) { ## pull in options if in the call 
-	   if (ref $_[0] eq "HASH")  { %opt = %{shift @_} }
-	elsif (@_ % 2 == 0)          { %opt = @_          }
-	}
+sub roster {  ## supports .xlsx through Spreadsheet::Read with Spreadsheet::ParseXLSX at this time
+    my $self = shift;
+
+    my $file = (shift or 't/Test_Table.xlsx'); 	## or return;  ## wants a filename (source)  ## return if needs
+
+    my %opt;  ## need to do something with this!  
+    if (@_) { ## pull in options if in the call
+        if (ref $_[0] eq "HASH")  { %opt = %{shift @_} }
+        elsif (@_ % 2 == 0)          { %opt = @_          }
+    $self->{roster} = {%opt}; 
+    
+    my ($workbook) = ReadData($file);
+    print "\$workbook= ", DDumper $workbook; 
+    if (1) { _roster_mfs_xlsx(\$self, \$workbook); } 
+
+    }
 
 } ## roster
 
