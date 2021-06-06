@@ -22,7 +22,9 @@ our @EXPORT_OK = qw(  );
 
 sub new {   ##  perl -I ./lib  script/new.pl
     my ($class) = shift @_;  ## print "Inside new with \$class = '$class'\n";
-    my $self = { test => 'tester' , };  ##  print "Self is still only a reference to \$self  = '$self'\n";
+    my $self = { test => 'tester' , 
+                  workbook => [],
+                  };  ##  print "Self is still only a reference to \$self  = '$self'\n";
     bless $self, $class; ## print "by blessing, \$self is now an bless (anonymous hash) associated with the class '$class': \$self = '$self'\n";
     return $self;  ## return the object
 } ## new
@@ -31,8 +33,8 @@ sub _roster_mfs_xlsx {
   ## MFS Roster format as of 2021-06-June-01 
     my $self = shift;
     my $workbook = shift;
-    $self->{roster} = {\$workbook};
-}
+    ${$self}->{workbook} = [$workbook] ;
+ }
 
 sub roster {  ## supports .xlsx through Spreadsheet::Read with Spreadsheet::ParseXLSX at this time
     my $self = shift;
@@ -43,10 +45,10 @@ sub roster {  ## supports .xlsx through Spreadsheet::Read with Spreadsheet::Pars
     if (@_) { ## pull in options if in the call
         if (ref $_[0] eq "HASH")  { %opt = %{shift @_} }
         elsif (@_ % 2 == 0)          { %opt = @_          }
-    $self->{roster} = {%opt}; 
+    ## $self->{roster} = {%opt}; 
     
     my ($workbook) = ReadData($file);
-    print "\$workbook= ", DDumper $workbook; 
+    ## print "\$workbook= ", DDumper $workbook; 
     if (1) { _roster_mfs_xlsx(\$self, \$workbook); } 
 
     }
