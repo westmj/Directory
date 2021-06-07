@@ -2,7 +2,7 @@ package Directory;
 ##  prove -lrv -j 4 t    and optionally: xt   ## (use the library, recurse directories, and multiple cores')
 ##  perlcritic --severity 2  --verbose 9  lib/Directory.pm
 ##  perltidy -l=100 -b  --indent-only lib/Directory.pm 
-use 5.008001;
+use v5.10; ## say
 use strict;
 use diagnostics; ## verbose errors
 use warnings FATAL => qw( all );
@@ -33,7 +33,7 @@ sub _roster_mfs_xlsx {
     my $self = shift;
     my $workbook = shift;
     ${$self}->{workbook} = $workbook ;
- }
+  }
 
 sub roster {  ## supports .xlsx through Spreadsheet::Read with Spreadsheet::ParseXLSX at this time
     my $self = shift;
