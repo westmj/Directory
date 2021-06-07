@@ -1,10 +1,9 @@
 package Directory;
-## prove -lrv -j 4 t    and optionally: xt   ## (use the library, recurse directories, and multiple cores')
+##  prove -lrv -j 4 t    and optionally: xt   ## (use the library, recurse directories, and multiple cores')
 ##  perlcritic --severity 2  --verbose 9  lib/Directory.pm
 ##  perltidy -l=100 -b  --indent-only lib/Directory.pm 
 use 5.008001;
 use strict;
-use warnings;
 use diagnostics; ## verbose errors
 use warnings FATAL => qw( all );
 use Encode            qw( encode decode );
@@ -23,7 +22,7 @@ our @EXPORT_OK = qw(  );
 sub new {   ##  perl -I ./lib  script/new.pl
     my ($class) = shift @_;  ## print "Inside new with \$class = '$class'\n";
     my $self = { test => 'tester' , 
-                  workbook => [],
+                  workbook => {},
                   };  ##  print "Self is still only a reference to \$self  = '$self'\n";
     bless $self, $class; ## print "by blessing, \$self is now an bless (anonymous hash) associated with the class '$class': \$self = '$self'\n";
     return $self;  ## return the object
@@ -33,7 +32,7 @@ sub _roster_mfs_xlsx {
   ## MFS Roster format as of 2021-06-June-01 
     my $self = shift;
     my $workbook = shift;
-    ${$self}->{workbook} = [$workbook] ;
+    ${$self}->{workbook} = $workbook ;
  }
 
 sub roster {  ## supports .xlsx through Spreadsheet::Read with Spreadsheet::ParseXLSX at this time
@@ -49,7 +48,8 @@ sub roster {  ## supports .xlsx through Spreadsheet::Read with Spreadsheet::Pars
     
     my ($workbook) = ReadData($file);
     ## print "\$workbook= ", DDumper $workbook; 
-    if (1) { _roster_mfs_xlsx(\$self, \$workbook); } 
+    if (1) { _roster_mfs_xlsx(\$self, $workbook); } 
+    ## if (1) { $self->_roster_mfs_xlsx(\$workbook); } 
 
     }
 
