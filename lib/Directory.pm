@@ -24,74 +24,128 @@ use Class::Tiny qw( workbook people caregiver role pages );
 sub new {   ##  perl -I ./lib  script/new.pl
     my ($class) = shift @_;  ## print "Inside new with \$class = '$class'\n";
     my $self = {  workbook => [],
-                  people => {},
-                  caregiver => {}, 
-                  role => {},
-                  pages => {},
-                  output => [],
-                  };  ##  print "Self is still only a reference to \$self  = '$self'\n";
+        people => {},
+        caregiver => {},
+        role => {},
+        pages => {},
+        output => [],
+      };  ##  print "Self is still only a reference to \$self  = '$self'\n";
     bless $self, $class; ## print "by blessing, \$self is now an bless (anonymous hash) associated with the class '$class': \$self = '$self'\n";
     return $self;  ## return the object
 } ## new
 
-sub _roster_mfs_xlsx {  slurp in the MFS roster and read people, caregivers, and roles
-  ## MFS Roster format as of 2021-06-June-01 
+sub _roster_test_tiny {
     my $self = shift;
     my $workbook = shift;
     ${$self}->{workbook} = $workbook ;
-    my ($data) =  {
-        'personal' =>  {'first' => 1 , 'last' => 2 , 'id' => 3 , 'address' => 10, 'host' => 19, 'email' => 5, 'phone' => 8 , 'annotation_summary' => 17, }, # associates a 'personal'/person category of information with a column number in the table
-        'family'  => {'father' => 12, 'mother' => 13, 'guardians' => 14, },  # associates caregivers of a person with that person by the column type
-        'role' => {'annotation' => 17,},  # stores annotations to a person by their full name... convenient to get the full names in a category
-      } ;
-    my (%role2sheet) = (   # associates a role with a table in the spreadsheet
-    'Administration' => 1, 
-    'Teachers' => 2,
-    '  Prekinder' => 3, 
-    '  Kinder' => 4, 
-    '  Prepa' => 5,
-    ' 1er Grado | 1st Grade' => 6, 
-    ' 2do Grado | 2nd Grade' => 7, 
-    ' 3er Grado | 3rd Grade' => 8, 
-    ' 4to Grado | 4th Grade' => 9,
-    ' 5to Grado | 5th Grade' => 10, 
-    ' 6to Grado | 6th Grade' => 11, 
-    ' 7mo Grado | 7th Grade' => 12,
-    ' 8vo Grado | 8th Grade' => 13, 
-    ' 9no Grado | 9th Grade' => 14,
-    '10mo Grado | 10th Grade' => 15, 
-    '11mo Grado | 11th Grade' => 16,
-    '12mo Grado | 12th Grade' => 17, 
-    'GAP Students' => 18, 
-    'School Committee' => 21, 
-    'Volunteers' => 20, 
+    my (%role2sheet) = (   # associates a role with a table (spreadsheet, worksheet) in the workbook.
+        'worksheet1' => 1,
       );
+    ## %role2sheet = ( 'test' => 1 ) ;
+    foreach my $role (sort keys %role2sheet) { # loop through the worksheets in the workbook
+        my $worksheet = $role2sheet{$role}; warn $worksheet; ## warn DDumper $self;
+        my ($maxrow) = ${$self}->workbook->[$worksheet]{maxrow};
+        warn "maxrow $maxrow";  ##  ${ @{ $$roster }[$role2sheet{$role}] }{'maxrow'};
+        ## my ($used_row, $row )  = (1, ) ; # the rows in the spreadsheet, should be used, but some are empty.  let's squawk
+        foreach my $row (2 .. $maxrow   ) {  # loop through the rows of people in each worksheet and store their information
+            ## next unless ( ${ @{ $$roster }[$role2sheet{$role}] } {'cell'}[1][$row] );  # anything in this row?
+            ## $used_row++; #count the rows that actually have data in them (skipping the header row that is titles)
+        } ## $row of table
+    } ## $role (table) of workbook
+}  ## _roster_test_tiny
 
-  }
+sub _roster_test {
+    my $self = shift;
+    my $workbook = shift;
+    ${$self}->{workbook} = $workbook ;
+    my (%role2sheet) = (   # associates a role with a table (spreadsheet, worksheet) in the workbook.
+        'Administration' => 1,
+        'Teachers' => 2,
+        '  Kinder' => 3,
+        '  Prepa' => 4,
+        ' 1er Grado | 1st Grade' => 5,
+        ' 2do Grado | 2nd Grade' => 6,
+        'School Committee' => 7,
+        'Volunteers' => 8,
+      );
+    ## %role2sheet = ( 'test' => 1 ) ;
+    foreach my $role (sort keys %role2sheet) { # loop through the worksheets in the workbook
+        my $worksheet = $role2sheet{$role}; warn $worksheet; ## warn DDumper $self;
+        my ($maxrow) = ${$self}->workbook->[$worksheet]{maxrow};
+        warn "maxrow $maxrow";  ##  ${ @{ $$roster }[$role2sheet{$role}] }{'maxrow'};
+        ## my ($used_row, $row )  = (1, ) ; # the rows in the spreadsheet, should be used, but some are empty.  let's squawk
+        foreach my $row (2 .. $maxrow   ) {  # loop through the rows of people in each worksheet and store their information
+            ## next unless ( ${ @{ $$roster }[$role2sheet{$role}] } {'cell'}[1][$row] );  # anything in this row?
+            ## $used_row++; #count the rows that actually have data in them (skipping the header row that is titles)
+        } ## $row of table
+    } ## $role (table) of workbook
+}  ## _roster_test
+
+sub _roster_mfs_xlsx {  ## slurp in the MFS roster and read people, caregivers, and roles
+    ## MFS Roster format as of 2021-06-June-01 
+    my $self = shift;
+    my $workbook = shift;
+    ${$self}->{workbook} = $workbook ;
+    my ($cols) =  {
+'person' =>  {'first' => 1 , 'last' => 2 , 'id' => 3 , 'address' => 10, 'host' => 19, 'email' => 5, 'phone' => 8 , 'annotation_summary' => 17, }, # associates a 'personal'/person category of information with a column number in the table
+'sponsor'  => {'father' => 12, 'mother' => 13, 'guardians' => 14, },  # associates caregivers of a person with that person by the column type
+'role' => {'annotation' => 17,},  # stores annotations to a person by their full name... convenient to get the full names in a category
+      } ;
+    my (%role2sheet) = (   # associates a role with a table (spreadsheet, worksheet) in the workbook.
+        'Administration' => 1,
+        'Teachers' => 2,
+        '  Prekinder' => 3,
+        '  Kinder' => 4,
+        '  Prepa' => 5,
+        ' 1er Grado | 1st Grade' => 6,
+        ' 2do Grado | 2nd Grade' => 7,
+        ' 3er Grado | 3rd Grade' => 8,
+        ' 4to Grado | 4th Grade' => 9,
+        ' 5to Grado | 5th Grade' => 10,
+        ' 6to Grado | 6th Grade' => 11,
+        ' 7mo Grado | 7th Grade' => 12,
+        ' 8vo Grado | 8th Grade' => 13,
+        ' 9no Grado | 9th Grade' => 14,
+        '10mo Grado | 10th Grade' => 15,
+        '11mo Grado | 11th Grade' => 16,
+        '12mo Grado | 12th Grade' => 17,
+        'GAP Students' => 18,
+        'School Committee' => 21,
+        'Volunteers' => 20,
+      );
+    ## %role2sheet = ( 'test' => 1 ) ;
+    foreach my $role (sort keys %role2sheet) { # loop through the worksheets in the workbook
+        my $worksheet = $role2sheet{$role}; warn $worksheet; ## warn DDumper $self;
+        my ($maxrow) = ${$self}->workbook->[$worksheet]{maxrow};
+        warn "maxrow $maxrow";  ##  ${ @{ $$roster }[$role2sheet{$role}] }{'maxrow'};
+        ## my ($used_row, $row )  = (1, ) ; # the rows in the spreadsheet, should be used, but some are empty.  let's squawk
+        foreach my $row (2 .. $maxrow   ) {  # loop through the rows of people in each worksheet and store their information
+            ## next unless ( ${ @{ $$roster }[$role2sheet{$role}] } {'cell'}[1][$row] );  # anything in this row?
+            ## $used_row++; #count the rows that actually have data in them (skipping the header row that is titles)
+        } ## $row of table
+    } ## $role (table) of workbook
+} ## _roster_mfs_xlsx
 
 sub roster {  ## supports .xlsx through Spreadsheet::Read with Spreadsheet::ParseXLSX at this time
     my $self = shift;
-
     my $file = (shift or 't/Test_Table.xlsx'); 	## or return;  ## wants a filename (source)  ## return if needs
-
-    my %opt;  ## need to do something with this!  
+    my %opt;  ## need to do something with this!
     if (@_) { ## pull in options if in the call
         if (ref $_[0] eq "HASH")  { %opt = %{shift @_} }
         elsif (@_ % 2 == 0)          { %opt = @_          }
-    ## $self->{roster} = {%opt}; 
-    
-    my ($workbook) = ReadData($file);
-    ## print "\$workbook= ", DDumper $workbook; 
-    if (1) { _roster_mfs_xlsx(\$self, $workbook); } 
-    ## if (1) { $self->_roster_mfs_xlsx(\$workbook); } 
+        ## $self->{roster} = {%opt}; 
 
+        my ($workbook) = ReadData($file);  warn "\nReadData on file $file\n";
+        ## print "\$workbook= ", DDumper $workbook; 
+        if ($file eq 't/Test_Table.xlsx') { _roster_test(\$self, $workbook); }
+        elsif ($file eq 't/tiny.xlsx') { _roster_test_tiny(\$self, $workbook); }
+        else { _roster_mfs_xlsx(\$self, $workbook); }
+        ## if (1) { $self->_roster_mfs_xlsx(\$workbook); } 
     }
-
 } ## roster
 
 sub read {
-  my $self = shift;
-
+    my $self = shift;
 
 } ## read
 
