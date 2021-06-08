@@ -34,11 +34,39 @@ sub new {   ##  perl -I ./lib  script/new.pl
     return $self;  ## return the object
 } ## new
 
-sub _roster_mfs_xlsx {
+sub _roster_mfs_xlsx {  slurp in the MFS roster and read people, caregivers, and roles
   ## MFS Roster format as of 2021-06-June-01 
     my $self = shift;
     my $workbook = shift;
     ${$self}->{workbook} = $workbook ;
+    my ($data) =  {
+        'personal' =>  {'first' => 1 , 'last' => 2 , 'id' => 3 , 'address' => 10, 'host' => 19, 'email' => 5, 'phone' => 8 , 'annotation_summary' => 17, }, # associates a 'personal'/person category of information with a column number in the table
+        'family'  => {'father' => 12, 'mother' => 13, 'guardians' => 14, },  # associates caregivers of a person with that person by the column type
+        'role' => {'annotation' => 17,},  # stores annotations to a person by their full name... convenient to get the full names in a category
+      } ;
+    my (%role2sheet) = (   # associates a role with a table in the spreadsheet
+    'Administration' => 1, 
+    'Teachers' => 2,
+    '  Prekinder' => 3, 
+    '  Kinder' => 4, 
+    '  Prepa' => 5,
+    ' 1er Grado | 1st Grade' => 6, 
+    ' 2do Grado | 2nd Grade' => 7, 
+    ' 3er Grado | 3rd Grade' => 8, 
+    ' 4to Grado | 4th Grade' => 9,
+    ' 5to Grado | 5th Grade' => 10, 
+    ' 6to Grado | 6th Grade' => 11, 
+    ' 7mo Grado | 7th Grade' => 12,
+    ' 8vo Grado | 8th Grade' => 13, 
+    ' 9no Grado | 9th Grade' => 14,
+    '10mo Grado | 10th Grade' => 15, 
+    '11mo Grado | 11th Grade' => 16,
+    '12mo Grado | 12th Grade' => 17, 
+    'GAP Students' => 18, 
+    'School Committee' => 21, 
+    'Volunteers' => 20, 
+      );
+
   }
 
 sub roster {  ## supports .xlsx through Spreadsheet::Read with Spreadsheet::ParseXLSX at this time
@@ -60,6 +88,12 @@ sub roster {  ## supports .xlsx through Spreadsheet::Read with Spreadsheet::Pars
     }
 
 } ## roster
+
+sub read {
+  my $self = shift;
+
+
+} ## read
 
 1;
 __END__
