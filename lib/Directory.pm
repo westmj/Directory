@@ -34,7 +34,7 @@ sub new {   ##  perl -I ./lib  script/new.pl
     return $self;  ## return the object
 } ## new
 
-sub _roster_test_tiny {
+sub roster_test_tiny {
     my $self = shift;
     my $workbook = shift;
     ${$self}->{workbook} = $workbook ;
@@ -52,9 +52,9 @@ sub _roster_test_tiny {
             ## $used_row++; #count the rows that actually have data in them (skipping the header row that is titles)
         } ## $row of table
     } ## $role (table) of workbook
-}  ## _roster_test_tiny
+}  ## roster_test_tiny
 
-sub _roster_test {
+sub roster_test {
     my $self = shift;
     my $workbook = shift;
     ${$self}->{workbook} = $workbook ;
@@ -65,32 +65,33 @@ sub _roster_test {
         '  Prepa' => 4,
         ' 1er Grado | 1st Grade' => 5,
         ' 2do Grado | 2nd Grade' => 6,
-        'School Committee' => 7,
-        'Volunteers' => 8,
+        'School Committee' => 8,
+        'Volunteers' => 7,
       );
+    my $cols_2_attr_ref =  { 'person' =>  {'1' => 'first', '2' => 'last', '3' => 'id', '10' => 'address', '19' => 'host', '5' => 'email', '8' => 'phone', '17' => 'annotation_summary', }, # associates a 'personal'/person category of information with a column number in the table
+      'sponsor'  => {'12' => 'father', '13' => 'mother', '14' => 'guardians', },  # associates caregivers of a person with that person by the column type
+      'role' => {'17' => 'annotation',},  # stores annotations to a person by their full name... convenient to get the full names in a category
+      } ;  warn "\$cols_ref ($cols_2_attr_ref) = ". DDumper $cols_2_attr_ref;
+    my %sheet2role = reverse %role2sheet;
     ## %role2sheet = ( 'test' => 1 ) ;
-    foreach my $role (sort keys %role2sheet) { # loop through the worksheets in the workbook
-        my $worksheet = $role2sheet{$role}; warn $worksheet; ## warn DDumper $self;
+    foreach my $worksheet (sort keys %sheet2role) { # loop through the worksheets in the workbook
+        ## my $worksheet = $role2sheet{$role}; warn $worksheet; ## warn DDumper $self;
         my ($maxrow) = ${$self}->workbook->[$worksheet]{maxrow};
-        warn "maxrow $maxrow";  ##  ${ @{ $$roster }[$role2sheet{$role}] }{'maxrow'};
+        my ($sheet_name) = ${$self}->workbook->[$worksheet]{label}; 
+        warn "worksheet # $worksheet; role '$sheet2role{$worksheet}' label '$sheet_name' maxrow $maxrow";  ##  ${ @{ $$roster }[$rroleole2sheet{$role}] }{'maxrow'};
         ## my ($used_row, $row )  = (1, ) ; # the rows in the spreadsheet, should be used, but some are empty.  let's squawk
         foreach my $row (2 .. $maxrow   ) {  # loop through the rows of people in each worksheet and store their information
             ## next unless ( ${ @{ $$roster }[$role2sheet{$role}] } {'cell'}[1][$row] );  # anything in this row?
             ## $used_row++; #count the rows that actually have data in them (skipping the header row that is titles)
         } ## $row of table
     } ## $role (table) of workbook
-}  ## _roster_test
+}  ## roster_test
 
-sub _roster_mfs_xlsx {  ## slurp in the MFS roster and read people, caregivers, and roles
+sub roster_mfs_xlsx {  ## slurp in the MFS roster and read people, caregivers, and roles
     ## MFS Roster format as of 2021-06-June-01 
     my $self = shift;
     my $workbook = shift;
     ${$self}->{workbook} = $workbook ;
-    my ($cols) =  {
-'person' =>  {'first' => 1 , 'last' => 2 , 'id' => 3 , 'address' => 10, 'host' => 19, 'email' => 5, 'phone' => 8 , 'annotation_summary' => 17, }, # associates a 'personal'/person category of information with a column number in the table
-'sponsor'  => {'father' => 12, 'mother' => 13, 'guardians' => 14, },  # associates caregivers of a person with that person by the column type
-'role' => {'annotation' => 17,},  # stores annotations to a person by their full name... convenient to get the full names in a category
-      } ;
     my (%role2sheet) = (   # associates a role with a table (spreadsheet, worksheet) in the workbook.
         'Administration' => 1,
         'Teachers' => 2,
@@ -113,7 +114,11 @@ sub _roster_mfs_xlsx {  ## slurp in the MFS roster and read people, caregivers, 
         'School Committee' => 21,
         'Volunteers' => 20,
       );
-    ## %role2sheet = ( 'test' => 1 ) ;
+    my ($cols) =  {
+'person' =>  {'first' => 1 , 'last' => 2 , 'id' => 3 , 'address' => 10, 'host' => 19, 'email' => 5, 'phone' => 8 , 'annotation_summary' => 17, }, # associates a 'personal'/person category of information with a column number in the table
+'sponsor'  => {'father' => 12, 'mother' => 13, 'guardians' => 14, },  # associates caregivers of a person with that person by the column type
+'role' => {'annotation' => 17,},  # stores annotations to a person by their full name... convenient to get the full names in a category
+      } ;
     foreach my $role (sort keys %role2sheet) { # loop through the worksheets in the workbook
         my $worksheet = $role2sheet{$role}; warn $worksheet; ## warn DDumper $self;
         my ($maxrow) = ${$self}->workbook->[$worksheet]{maxrow};
@@ -124,7 +129,7 @@ sub _roster_mfs_xlsx {  ## slurp in the MFS roster and read people, caregivers, 
             ## $used_row++; #count the rows that actually have data in them (skipping the header row that is titles)
         } ## $row of table
     } ## $role (table) of workbook
-} ## _roster_mfs_xlsx
+} ## roster_mfs_xlsx
 
 sub roster {  ## supports .xlsx through Spreadsheet::Read with Spreadsheet::ParseXLSX at this time
     my $self = shift;
@@ -137,10 +142,10 @@ sub roster {  ## supports .xlsx through Spreadsheet::Read with Spreadsheet::Pars
 
         my ($workbook) = ReadData($file);  warn "\nReadData on file $file\n";
         ## print "\$workbook= ", DDumper $workbook; 
-        if ($file eq 't/Test_Table.xlsx') { _roster_test(\$self, $workbook); }
-        elsif ($file eq 't/tiny.xlsx') { _roster_test_tiny(\$self, $workbook); }
-        else { _roster_mfs_xlsx(\$self, $workbook); }
-        ## if (1) { $self->_roster_mfs_xlsx(\$workbook); } 
+        if ($file eq 't/Test_Table.xlsx') { roster_test(\$self, $workbook); }
+        elsif ($file eq 't/tiny.xlsx') { roster_test_tiny(\$self, $workbook); }
+        else { roster_mfs_xlsx(\$self, $workbook); }
+        ## if (1) { $self->roster_mfs_xlsx(\$workbook); } 
     }
 } ## roster
 
