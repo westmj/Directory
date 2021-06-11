@@ -21,6 +21,17 @@ our @EXPORT    = qw( roster  );
 our @EXPORT_OK = qw(  );
 
 use Class::Tiny qw( workbook people caregiver role pages );
+
+sub _c { my $str = shift;  ## remove leading and trailing spaces, and private informaation (marked privado)
+    if (!defined $str) {return();};
+    $str =~ s/\[\s*privado[^]]*\]\s*//smgx; # privado private.... if inside:  [privado ... ]
+    $str =~ s/^\s+|\s+$//sxmg ;
+    if ($str eq q{?}) {$str =''};
+    return($str)
+} ; ## sub _c    print "'", c( " \t trim white space  before and after  \n\t  "),  "'\n";
+
+sub _a { my $str = shift; if (!defined $str) {return();}; if ($str =~  s/(.*)(.)(.*)\s\(\1(.)(\3)\)/$1$4$3/smx) { }      return($str); } ; # treat accented first names and accented second characters such as Olger and Yerica for alphobetizing
+
 sub new {   ##  perl -I ./lib  script/new.pl
     my ($class) = shift @_;  ## print "Inside new with \$class = '$class'\n";
     my $self = {  workbook => [],
@@ -28,7 +39,7 @@ sub new {   ##  perl -I ./lib  script/new.pl
         caregiver => {},
         role => {},
         pages => {},
-        output => [],
+        output => "",
       };  ##  print "Self is still only a reference to \$self  = '$self'\n";
     bless $self, $class; ## print "by blessing, \$self is now an bless (anonymous hash) associated with the class '$class': \$self = '$self'\n";
     return $self;  ## return the object
@@ -68,19 +79,40 @@ sub roster_test {
         'School Committee' => 8,
         'Volunteers' => 7,
       );
-    my $cols_2_attr_ref =  { 'person' =>  {'1' => 'first', '2' => 'last', '3' => 'id', '10' => 'address', '19' => 'host', '5' => 'email', '8' => 'phone', '17' => 'annotation_summary', }, # associates a 'personal'/person category of information with a column number in the table
-      'sponsor'  => {'12' => 'father', '13' => 'mother', '14' => 'guardians', },  # associates caregivers of a person with that person by the column type
-      'role' => {'17' => 'annotation',},  # stores annotations to a person by their full name... convenient to get the full names in a category
+    my %attr_identifier = ( 'first' => 1, 'last' => 2 ); ## construct $identifier below 
+    my $cols_2_attr_ref =  { 'person' =>  { '1' => 'first', '2' => 'last' , '3' => 'id', '10' => 'address', '19' => 'host', '5' => 'email', '8' => 'phone', '17' => 'annotation_summary', }, # associates a 'personal'/person category of information with a column number in the table
+'sponsor'  => {'12' => 'father', '13' => 'mother', '14' => 'guardians', },  # associates caregivers of a person with that person by the column type
+'role' => {'17' => 'annotation',},  # stores annotations to a person by their full name... convenient to get the full names in a category
       } ;  warn "\$cols_ref ($cols_2_attr_ref) = ". DDumper $cols_2_attr_ref;
     my %sheet2role = reverse %role2sheet;
     ## %role2sheet = ( 'test' => 1 ) ;
     foreach my $worksheet (sort keys %sheet2role) { # loop through the worksheets in the workbook
         ## my $worksheet = $role2sheet{$role}; warn $worksheet; ## warn DDumper $self;
         my ($maxrow) = ${$self}->workbook->[$worksheet]{maxrow};
-        my ($sheet_name) = ${$self}->workbook->[$worksheet]{label}; 
+        my ($sheet_name) = ${$self}->workbook->[$worksheet]{label};
         warn "worksheet # $worksheet; role '$sheet2role{$worksheet}' label '$sheet_name' maxrow $maxrow";  ##  ${ @{ $$roster }[$rroleole2sheet{$role}] }{'maxrow'};
         ## my ($used_row, $row )  = (1, ) ; # the rows in the spreadsheet, should be used, but some are empty.  let's squawk
         foreach my $row (2 .. $maxrow   ) {  # loop through the rows of people in each worksheet and store their information
+            my $identifier = _c(${$self}->workbook->[$worksheet]{cell}[ $attr_identifier{'first'}][$row]) .' ' .
+                _c(${$self}->workbook->[$worksheet]{cell}[ $attr_identifier{'last'}][$row]) ;  # form a "primary key" from the first name and last name
+            warn "    \$identifier = '$identifier'";
+            foreach my $col ( sort keys %{ ${$cols_2_attr_ref}{person} }    ) {
+              if ($row ==2  and  defined(${$self}->workbook->[$worksheet]{cell}[$col][$row]) ) {
+                  warn "     \$identifier = '$identifier', person column '$col' of type '${$cols_2_attr_ref}{person}{$col}' has value '". ${$self}->workbook->[$worksheet]{cell}[$col][$row] . "' \n";
+                }
+                elsif ($row ==2 ) {warn "    \$identifier = '$identifier', person column '$col' of type '${$cols_2_attr_ref}{person}{$col}' has value 'undef' \n";}
+            }
+            foreach my $col ( sort keys %{ ${$cols_2_attr_ref}{sponsor} }    ) {
+                if ($row ==2  and  defined(${$self}->workbook->[$worksheet]{cell}[$col][$row]) ) {warn "    sponsor column '$col' of type '${$cols_2_attr_ref}{sponsor}{$col}' has value '". ${$self}->workbook->[$worksheet]{cell}[$col][$row] . "' \n";}
+                elsif ($row ==2 ) {warn "    sponsor column '$col' of type '${$cols_2_attr_ref}{sponsor}{$col}' has value 'undef' \n";}
+            }
+            foreach my $col ( sort keys %{ ${$cols_2_attr_ref}{role} }    ) {
+                if ($row ==2  and  defined(${$self}->workbook->[$worksheet]{cell}[$col][$row]) ) { ## cell has content 
+                  warn "    role column '$col' of type '${$cols_2_attr_ref}{role}{$col}' has value '". ${$self}->workbook->[$worksheet]{cell}[$col][$row] . "' \n";
+                  
+                }
+                elsif ($row ==2 ) {warn "    role column '$col' of type '${$cols_2_attr_ref}{role}{$col}' has value 'undef' \n";}
+            }
             ## next unless ( ${ @{ $$roster }[$role2sheet{$role}] } {'cell'}[1][$row] );  # anything in this row?
             ## $used_row++; #count the rows that actually have data in them (skipping the header row that is titles)
         } ## $row of table
