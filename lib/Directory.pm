@@ -3,6 +3,7 @@ use strict;
 no strict 'refs';
 use diagnostics; ## verbose errors
 use warnings FATAL => qw( all );
+use English qw( -no_match_vars );  ## https://perldoc.perl.org/English 
 package Directory;
 ##  prove -lrv -j 4 t    and optionally: xt   ## (use the library, recurse directories, and multiple cores')
 ##  perlcritic --severity 2  --verbose 9  lib/Directory.pm
@@ -90,17 +91,20 @@ sub roster_test {
         ## my $worksheet = $role2sheet{$role}; warn $worksheet; ## warn DDumper $self;
         my ($maxrow) = ${$self}->workbook->[$worksheet]{maxrow};
         my ($sheet_name) = ${$self}->workbook->[$worksheet]{label};
-        warn "worksheet # $worksheet; role '$sheet2role{$worksheet}' label '$sheet_name' maxrow $maxrow";  ##  ${ @{ $$roster }[$rroleole2sheet{$role}] }{'maxrow'};
+        ## warn "worksheet # $worksheet; role '$sheet2role{$worksheet}' label '$sheet_name' maxrow $maxrow";  ##  ${ @{ $$roster }[$rroleole2sheet{$role}] }{'maxrow'};
         ## my ($used_row, $row )  = (1, ) ; # the rows in the spreadsheet, should be used, but some are empty.  let's squawk
         foreach my $row (2 .. $maxrow   ) {  # loop through the rows of people in each worksheet and store their information
             my $identifier = _c(${$self}->workbook->[$worksheet]{cell}[ $attr_identifier{'first'}][$row]) .' ' .
                 _c(${$self}->workbook->[$worksheet]{cell}[ $attr_identifier{'last'}][$row]) ;  # form a "primary key" from the first name and last name
-            warn "    \$identifier = '$identifier'";
+            ## warn "    \$identifier = '$identifier'";
             foreach my $col ( sort keys %{ ${$cols_2_attr_ref}{person} }    ) {
-              if ($row ==2  and  defined(${$self}->workbook->[$worksheet]{cell}[$col][$row]) ) {
-                  warn "     \$identifier = '$identifier', person column '$col' of type '${$cols_2_attr_ref}{person}{$col}' has value '". ${$self}->workbook->[$worksheet]{cell}[$col][$row] . "' \n";
+               ## if ($row ==2  and  defined(${$self}->workbook->[$worksheet]{cell}[$col][$row]) ) {
+               ##   warn "     \$identifier = '$identifier', person column '$col' of type '${$cols_2_attr_ref}{person}{$col}' has value '". ${$self}->workbook->[$worksheet]{cell}[$col][$row] . "' \n";
+               ## }
+               ## elsif ($row ==2 ) {warn "    \$identifier = '$identifier', person column '$col' of type '${$cols_2_attr_ref}{person}{$col}' has value 'undef' \n";}
+              if ( defined(${$self}->workbook->[$worksheet]{cell}[$col][$row]) ) {
+                ${$self}->people->{$identifier}{ ${$cols_2_attr_ref}{person}{$col} } = ${$self}->workbook->[$worksheet]{cell}[$col][$row]; 
                 }
-                elsif ($row ==2 ) {warn "    \$identifier = '$identifier', person column '$col' of type '${$cols_2_attr_ref}{person}{$col}' has value 'undef' \n";}
             }
             foreach my $col ( sort keys %{ ${$cols_2_attr_ref}{sponsor} }    ) {
                 if ($row ==2  and  defined(${$self}->workbook->[$worksheet]{cell}[$col][$row]) ) {warn "    sponsor column '$col' of type '${$cols_2_attr_ref}{sponsor}{$col}' has value '". ${$self}->workbook->[$worksheet]{cell}[$col][$row] . "' \n";}

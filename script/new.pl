@@ -30,7 +30,7 @@ use Encode qw( encode decode );
     ## say ref $here, "\n We say: ", $here->{worksheet}->[1]->{A1}, "\n\n";
     ## say "\$here->workbook(): ", $here->workbook(); 
     ## say "\$here->workbook->[0]{parser}: ", $here->workbook->[0]{parser}; 
-
+    say "\$here->workbook->people : ", DDumper $here->people ; 
    exit; 
 
 BEGIN { $ENV{SPREADSHEET_READ_XLSX} = "Spreadsheet::ParseXLSX";} ## avoid Spreadsheet::XLSX bad reader see Merijn emails
